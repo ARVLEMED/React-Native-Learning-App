@@ -1,11 +1,12 @@
-// GuideCard.js
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {  Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 export default function GuideCard({ title, content, onPress }) {
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
       <Text style={styles.title}>{title}</Text>
-      <Text style={styles.content}>{content.substring(0, 100)}...</Text> {/**teaser */}
+      <Text style={styles.content} numberOfLines={3}>
+        {content.substring(0, 100)}...
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -20,7 +21,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3, // Android shadow
+    width: '100%', // Full width for dashboard
   },
-  title: { fontSize: 18, fontWeight: 'bold', marginBottom: 5 },
-  content: { fontSize: 14, color: '#666' },
+  title: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    marginBottom: 5,
+    color: '#333',
+  },
+  content: { 
+    fontSize: 14, 
+    color: '#666',
+    lineHeight: 20, // Handles multiline strings
+  },
 });
