@@ -1,6 +1,6 @@
 // Dashboard.js (or App.js)
 import { ScrollView, View, Text, Image, StyleSheet, Dimensions } from 'react-native';
-import GuideCard from './GuideCard';
+import GuideCard from '../GuideCard';
 
 const { width } = Dimensions.get('window');
 

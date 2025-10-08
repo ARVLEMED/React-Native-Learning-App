@@ -1,6 +1,13 @@
+// In GuideCard.js, update onPress:
+import { useNavigation } from '@react-navigation/native';
 import {  Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 export default function GuideCard({ title, content, onPress }) {
+  const navigation = useNavigation();
+  const handlePress = () => {
+    navigation.navigate('FullGuide', { guide: { title, content } });
+    console.log('Nav to full guide');
+  };
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
       <Text style={styles.title}>{title}</Text>
