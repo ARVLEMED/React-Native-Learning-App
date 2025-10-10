@@ -3,43 +3,27 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, Text, Button } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useState } from 'react';
+import { useState, useContext, memo } from 'react';
+import { AppProvider, AppContext } from './context/AppContext';
+import { theme } from './Theme'; 
+import OnboardingScreen from './screens/OnboardingScreen';
+
+import TrackersScreen from './screens/TrackersScreen';
 
 // Import screens
 import Dashboard from './screens/Dashboard';
-import PersonalPrefs from './screens/PersonalPrefs';
-import CycleTracker from './screens/CycleTracker';
 import FullGuideScreen from './screens/FullGuideScreen';
 import PartnerScreen from './screens/PartnerScreen';
 
 // Navigators
 const Stack = createStackNavigator();
-const Tab = createBottomTabNavigator(); // Should work if package installed
-
-// Trackers Screen
-function TrackersScreen() {
-  const [activeTracker, setActiveTracker] = useState('prefs');
-  return (
-    <View style={trackerStyles.container}>
-      <Text style={trackerStyles.title}>Trackers</Text>
-      <View style={trackerStyles.buttonRow}>
-        <Button title="Food Prefs" onPress={() => setActiveTracker('prefs')} color="#FFB6C1" />
-        <Button title="Cycle Tracker" onPress={() => setActiveTracker('cycle')} color="#FFB6C1" />
-      </View>
-      {activeTracker === 'prefs' ? <PersonalPrefs /> : <CycleTracker />}
-    </View>
-  );
-}
-const trackerStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f8f8' },
-  title: { fontSize: 20, fontWeight: 'bold', padding: 20, color: '#333' },
-  buttonRow: { flexDirection: 'row', justifyContent: 'space-around', padding: 10 },
-});
+const Tab = createBottomTabNavigator();
 
 // Tab Navigator
-function TabNavigator() {
+const TabNavigator = memo(() => {
+  const { cycles, sexLogs } = useContext(AppContext);
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -50,7 +34,7 @@ function TabNavigator() {
           else if (route.name === 'Partner') iconName = focused ? 'people' : 'people-outline';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#FFB6C1',
+        tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: 'gray',
         tabBarLabelStyle: { fontSize: 12 },
         tabBarStyle: { backgroundColor: '#fff' },
@@ -65,7 +49,11 @@ function TabNavigator() {
       <Tab.Screen
         name="Trackers"
         component={TrackersScreen}
-        options={{ tabBarLabel: 'Trackers', accessibilityLabel: 'Trackers Tab' }}
+        options={{
+          tabBarLabel: 'Trackers',
+          accessibilityLabel: 'Trackers Tab',
+          tabBarBadge: (cycles.length + sexLogs.length) || undefined,
+        }}
       />
       <Tab.Screen
         name="Partner"
@@ -74,36 +62,43 @@ function TabNavigator() {
       />
     </Tab.Navigator>
   );
-}
+});
 
 export default function App() {
+  const [showOnboarding, setShowOnboarding] = useState(true);
+
   return (
-    <SafeAreaView style={appStyles.container} edges={['top', 'left', 'right']}>
-      <NavigationContainer>
-        <Stack.Navigator
-          initialRouteName="Home"
-          screenOptions={{
-            headerStyle: { backgroundColor: '#f8f8f8' },
-            headerTintColor: '#333',
-            headerTitleStyle: { fontWeight: 'bold' },
-          }}
-        >
-          <Stack.Screen name="Home" component={TabNavigator} options={{ headerShown: false }} />
-          <Stack.Screen
-            name="FullGuide"
-            component={FullGuideScreen}
-            options={({ route }) => ({
-              title: route.params?.guide?.title || 'Guide Details',
-            })}
-          />
-          <Stack.Screen name="Partner" component={PartnerScreen} options={{ title: 'Partner View' }} />
-        </Stack.Navigator>
-      </NavigationContainer>
-      <StatusBar style="auto" />
-    </SafeAreaView>
+    <AppProvider>
+      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+        {showOnboarding ? (
+          <OnboardingScreen onClose={() => setShowOnboarding(false)} />
+        ) : (
+          <NavigationContainer>
+            <Stack.Navigator
+              initialRouteName="Home"
+              screenOptions={{
+                headerStyle: { backgroundColor: theme.colors.background },
+                headerTintColor: theme.colors.text,
+                headerTitleStyle: { fontWeight: 'bold' },
+              }}
+            >
+              <Stack.Screen name="Home" component={TabNavigator} options={{ headerShown: false }} />
+              <Stack.Screen
+                name="FullGuide"
+                component={FullGuideScreen}
+                options={({ route }) => ({
+                  title: route.params?.guide?.title || 'Guide Details',
+                })}
+              />
+            </Stack.Navigator>
+          </NavigationContainer>
+        )}
+        <StatusBar style="auto" />
+      </SafeAreaView>
+    </AppProvider>
   );
 }
 
-const appStyles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f8f8' },
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: theme.colors.background },
 });

@@ -11,6 +11,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialIcons'; // Import icons
 
 export default function CycleTracker() {
   const navigation = useNavigation();
@@ -90,6 +91,14 @@ export default function CycleTracker() {
     if (selectedDate) setEndDate(selectedDate);
   };
 
+  // Custom button component with icon
+  const IconButton = ({ title, onPress, iconName }) => (
+    <View style={styles.iconButtonContainer}>
+      <Icon name={iconName} size={20} color="#FFB6C1" style={styles.icon} />
+      <Button title={title} onPress={onPress} color="#FFB6C1" />
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Log Your Cycle</Text>
@@ -121,9 +130,9 @@ export default function CycleTracker() {
       )}
 
       <View style={styles.buttonRow}>
-        <Button title="Log Cycle" onPress={saveCycle} color="#FFB6C1" />
-        <Button title="Reset Dates" onPress={resetDates} color="#FFB6C1" />
-        <Button title="Share with Partner" onPress={shareLastCycle} color="#FFB6C1" />
+        <IconButton title="Log" onPress={saveCycle} iconName="calendar-month" />
+        <IconButton title="Reset" onPress={resetDates} iconName="refresh" />
+        <IconButton title="Share" onPress={shareLastCycle} iconName="share" />
       </View>
 
       <Text style={styles.count}>Cycles Logged: {cycles.length}</Text>
@@ -150,7 +159,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#ccc',
     padding: 15,
-    marginVertical: 5,
+    marginVertical: 10,
     borderRadius: 5,
     alignItems: 'center',
   },
@@ -158,7 +167,17 @@ const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginVertical: 10,
+    marginVertical: 20,
+    paddingHorizontal: 10,
+  },
+  iconButtonContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    width: '30%', // Uniform width for all buttons
+    height: 70, // Fixed height to ensure uniformity
+  },
+  icon: {
+    marginBottom: 5,
   },
   count: { fontSize: 16, marginVertical: 10, fontWeight: '500', color: '#666' },
   history: { marginTop: 20 },

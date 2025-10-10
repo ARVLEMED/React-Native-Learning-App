@@ -1,13 +1,20 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, FlatList } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert, FlatList, TouchableOpacity } from 'react-native';
+import { Picker } from '@react-native-picker/picker'; // Explicit import for Picker
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icon from 'react-native-vector-icons/MaterialIcons'; // Import icons for delete
 
 export default function PersonalPrefs() {
   const [favoriteFoods, setFavoriteFoods] = useState([]);
   const [inputFood, setInputFood] = useState('');
+  const [category, setCategory] = useState('All');
+  const [categories] = useState(['All', 'Snacks', 'Meals', 'Desserts', 'Drinks']);
 
   useEffect(() => {
     loadFavoriteFoods();
+    return () => {
+      console.log('Cleaning up PersonalPrefs...'); // Ensure proper cleanup
+    };
   }, []);
 
   const loadFavoriteFoods = async () => {
@@ -20,31 +27,55 @@ export default function PersonalPrefs() {
       }
     } catch (error) {
       console.error('Load error:', error);
+      Alert.alert('Error', 'Failed to load favorite foods');
     }
   };
 
   const saveFavoriteFood = async () => {
-    console.log('Save pressed. Input:', inputFood);
+    console.log('Save pressed. Input:', inputFood, 'Category:', category);
     if (!inputFood.trim()) {
-      return Alert.alert('Error', 'Enter your favorite food');
+      return Alert.alert('Error', 'Please enter a food item');
     }
-    const newFood = { id: Date.now().toString(), name: inputFood.trim() };
+    if (category === 'All') {
+      return Alert.alert('Error', 'Please select a category');
+    }
+    const newFood = { id: Date.now().toString(), name: inputFood.trim(), category };
     const updated = [...favoriteFoods, newFood];
     try {
       console.log('Saving updated:', updated);
       await AsyncStorage.setItem('favoriteFoods', JSON.stringify(updated));
       setFavoriteFoods(updated);
       setInputFood('');
-      Alert.alert('Success', `${inputFood} added to favorites!`);
+      Alert.alert('Success', `${inputFood} added to ${category} favorites!`);
     } catch (error) {
       console.error('Save error:', error);
       Alert.alert('Error', 'Failed to save—try again');
     }
   };
 
+  const deleteFavoriteFood = async (id) => {
+    console.log('Deleting food with id:', id);
+    const updated = favoriteFoods.filter((food) => food.id !== id);
+    try {
+      await AsyncStorage.setItem('favoriteFoods', JSON.stringify(updated));
+      setFavoriteFoods(updated);
+      Alert.alert('Success', 'Food removed from favorites!');
+    } catch (error) {
+      console.error('Delete error:', error);
+      Alert.alert('Error', 'Failed to delete—try again');
+    }
+  };
+
   const renderFoodItem = ({ item }) => (
-    <Text style={styles.foodItem}>{item.name}</Text>
+    <View style={styles.foodItemContainer}>
+      <Text style={styles.foodItem}>{item.name} ({item.category})</Text>
+      <TouchableOpacity onPress={() => deleteFavoriteFood(item.id)}>
+        <Icon name="delete" size={20} color="#FF4444" />
+      </TouchableOpacity>
+    </View>
   );
+
+  const filteredFoods = category === 'All' ? favoriteFoods : favoriteFoods.filter(food => food.category === category);
 
   return (
     <View style={styles.container}>
@@ -56,10 +87,19 @@ export default function PersonalPrefs() {
         onChangeText={setInputFood}
         keyboardType="default"
       />
-      <Button title="Add Food" onPress={saveFavoriteFood} />
-      <Text style={styles.count}>Foods Logged: {favoriteFoods.length}</Text>
+      <Picker
+        selectedValue={category}
+        onValueChange={setCategory}
+        style={styles.picker}
+      >
+        {categories.map((cat) => (
+          <Picker.Item label={cat} value={cat} key={cat} />
+        ))}
+      </Picker>
+      <Button title="Add Food" onPress={saveFavoriteFood} color="#4CAF50" />
+      <Text style={styles.count}>Foods Logged: {filteredFoods.length}</Text>
       <FlatList
-        data={favoriteFoods}
+        data={filteredFoods}
         renderItem={renderFoodItem}
         keyExtractor={(item) => item.id}
         style={styles.list}
@@ -69,8 +109,8 @@ export default function PersonalPrefs() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, marginTop: 20 },
-  title: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
+  container: { padding: 20, marginTop: 20, flex: 1 },
+  title: { fontSize: 18, fontWeight: 'bold', marginBottom: 10, color: '#333' },
   input: { 
     borderWidth: 1, 
     borderColor: '#ccc', 
@@ -79,12 +119,24 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     fontSize: 16,
   },
-  count: { fontSize: 16, marginVertical: 10, fontWeight: '500' },
-  list: { maxHeight: 200 },
-  foodItem: { 
+  picker: { 
+    borderWidth: 1, 
+    borderColor: '#ccc', 
+    marginVertical: 5, 
+    borderRadius: 5,
+    height: 50, // Ensure consistent height
+  },
+  count: { fontSize: 16, marginVertical: 10, fontWeight: '500', color: '#666' },
+  list: { maxHeight: 200, marginTop: 10 },
+  foodItemContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
     padding: 5, 
-    fontSize: 14, 
     borderBottomWidth: 1, 
     borderBottomColor: '#eee' 
+  },
+  foodItem: { 
+    fontSize: 14, 
+    color: '#333',
   },
 });
